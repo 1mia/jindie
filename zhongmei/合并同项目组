@@ -1,0 +1,313 @@
+package jfq5.pmgt.pmct.bo.form;
+
+import com.alibaba.druid.support.logging.Log;
+import com.alibaba.druid.support.logging.LogFactory;
+import kd.bos.algo.*;
+import kd.bos.algo.input.CollectionInput;
+import kd.bos.entity.report.AbstractReportListDataPlugin;
+import kd.bos.dataentity.entity.DynamicObject;
+import kd.bos.entity.report.FilterInfo;
+import kd.bos.entity.report.FilterItemInfo;
+import kd.bos.entity.report.ReportQueryParam;
+import kd.bos.orm.query.QCP;
+import kd.bos.orm.query.QFilter;
+import kd.bos.report.plugin.AbstractReportFormPlugin;
+import kd.bos.servicehelper.QueryServiceHelper;
+import kd.sdk.plugin.Plugin;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
+/**
+ * @description: 报表查询插件
+ * @author cj
+ * @date 2026/4/21 10:35
+ * @version 1.0
+ */
+public class BussiOpportunityPlugin extends AbstractReportListDataPlugin implements Plugin {
+    private static final Log logger = LogFactory.getLog(BussiOpportunityPlugin.class);
+
+    // 项目日报单据标识
+    private static final String PROJECT_DAILY_BILL = "jfq5_projectdailyreport";
+
+
+    // 报表显示字段定义（12个字段）
+    private static final String[] FIELDS = {
+            "jfq5_cluename",              // 线索名称(商机线索.线索名称：name)
+            "jfq5_customer",              // 业主名称(商机线索.客户名：customer)
+            "jfq5_address",               // 地点(商机线索.项目地址：project_address)
+            "jfq5_amount",                // 项目预算(商机线索.预计合同金额：contract_amount)
+            "jfq5_description",           // 项目概况(商机线索.description)
+            "jfq5_opportunityowner",      // 负责人(商机线索.jfq5_opportunityowner)
+            "jfq5_date",                  // 计划招标时间(商机线索.预计招标日期：start_date)
+            "jfq5_contact",               // 联系人(日报.jfq5_basedatafield21)
+            "jfq5_progress",              // 项目进度(日报.jfq5_textfield2)
+            "jfq5_difficulties" ,          // 遇到的困难(日报.jfq5_textfield31)
+            "jfq5_auditdate",             // 审核时间(日报.auditdate)
+            "jfq5_remarks"                 //备注(日报.jfq5_textfield4)
+    };
+
+    private static final DataType[] DATATYPES = {
+            DataType.LongType,            // jfq5_cluename - 线索名称（基础资料）
+            DataType.LongType,            // jfq5_customer - 业主名称（基础资料）
+            DataType.StringType,            // jfq5_address - 地点（行政区划-基础资料）
+            DataType.BigDecimalType,      // jfq5_amount - 项目预算（金额）
+            DataType.StringType,          // jfq5_description - 项目概况（多行文本）
+            DataType.LongType,            // jfq5_opportunityowner - 负责人（基础资料）
+            DataType.DateType,            // jfq5_date - 计划招标时间（日期）
+            DataType.LongType,            // jfq5_contact - 联系人（基础资料）
+            DataType.StringType,          // jfq5_progress - 项目进度（文本）
+            DataType.StringType,         // jfq5_difficulties - 遇到的困难（文本/备注）
+            DataType.DateType,          // auditdate - 审核时间（日期）
+            DataType.StringType           // jfq5_remarks - 备注（文本）
+
+    };
+
+
+    @Override
+    public DataSet query(ReportQueryParam reportQueryParam, Object o) {
+        logger.info("========== [商机线索进度表] query方法开始执行 ==========");
+
+
+        // 1. 打印传入参数
+        logger.info("[参数检查] reportQueryParam: " + (reportQueryParam != null ? "非空" : "空"));
+        if (reportQueryParam != null) {
+            logger.info("[参数检查] Filter: " + (reportQueryParam.getFilter() != null ? "非空" : "空"));
+        }
+
+        // 2. 初始化结果集容器
+        logger.info("[初始化] 开始创建结果集容器...");
+        Collection<Object[]> coll = new ArrayList<>();
+        RowMeta createRowMeta = RowMetaFactory.createRowMeta(FIELDS, DATATYPES);
+        logger.info("[初始化] FIELDS数量: " + FIELDS.length);
+        logger.info("[初始化] DATATYPES数量: " + DATATYPES.length);
+        logger.info("[初始化] FIELDS内容: " + String.join(", ", FIELDS));
+
+        CollectionInput collectionInput = new CollectionInput(createRowMeta, coll);
+        DataSet createDataSet = Algo.create(this.getClass().getName()).createDataSet(collectionInput);
+        logger.info("[初始化] 结果集容器创建成功");
+
+        // 3. 处理过滤条件
+        ArrayList<QFilter> dailyFilterList = new ArrayList<>();
+            /*logger.info("[过滤条件] 开始处理页面传入的过滤条件...");
+            ArrayList<QFilter> dailyFilterList = new ArrayList<>();
+            FilterInfo filterInfo = reportQueryParam.getFilter();
+
+            if (filterInfo != null) {
+                logger.info("[过滤条件] filterInfo非空，FilterItems数量: " + filterInfo.getFilterItems().size());
+                int itemIndex = 0;
+                for (FilterItemInfo itemInfo : filterInfo.getFilterItems()) {
+                    itemIndex++;
+                    String propName = itemInfo.getPropName();
+                    Object value = itemInfo.getValue();
+                    String compareType = itemInfo.getCompareType();
+
+                    logger.info("[过滤条件] 处理第" + itemIndex + "个过滤项 - 字段: " + propName + ", 操作符: " + compareType);
+
+                    // 处理线索名称过滤
+                    if ("jfq5_cluename".equals(propName)) {
+                        logger.info("[过滤条件] -> 识别为线索名称过滤");
+                        if (value != null) {
+                            Object filterValue = value instanceof DynamicObject
+                                    ? ((DynamicObject) value).getPkValue()
+                                    : value;
+                            logger.info("[过滤条件] 提取线索ID: " + filterValue);
+                            dailyFilterList.add(new QFilter("entryentity.jfq5_basedatafield", QCP.equals, filterValue));
+                        }
+                    }
+                    // 处理日期区间过滤
+                    else if ("jfq5_daterange_startdate".equals(propName)) {
+                        logger.info("[过滤条件] -> 识别为开始日期过滤");
+                        if (value != null) {
+                            dailyFilterList.add(new QFilter("entryentity.jfq5_basedatafield.start_date", QCP.large_equals, value));
+                            logger.info("[过滤条件] 添加开始日期过滤: >= " + value);
+                        }
+                    } else if ("jfq5_daterange_enddate".equals(propName)) {
+                        logger.info("[过滤条件] -> 识别为结束日期过滤");
+                        if (value != null) {
+                            dailyFilterList.add(new QFilter("entryentity.jfq5_basedatafield.start_date", QCP.less_equals, value));
+                            logger.info("[过滤条件] 添加结束日期过滤: <= " + value);
+                        }
+                    }
+                }
+            } else {
+                logger.warn("[过滤条件] 警告：filterInfo为null，将查询所有数据");
+            }
+            logger.info("[过滤条件] 最终组合过滤条件数量: " + dailyFilterList.size());*/
+
+
+
+
+        // 4. 执行数据查询
+        logger.info("[数据查询] 开始查询项目日报数据...");
+        logger.info("[数据查询] 单据标识: " + PROJECT_DAILY_BILL);
+
+        String queryFields = fields();
+
+        logger.info("[数据查询] 查询字段: " + queryFields);
+        logger.info("[数据查询] 过滤条件数量: " + dailyFilterList.size());
+
+        //1.查询商机线索数据
+        DataSet ectbProjectInfo = QueryServiceHelper.queryDataSet(
+                this.getClass().getName(),
+                "ectb_project_info_f7",
+                projectFields(),
+                new QFilter[]{},
+                null
+        );
+        //使用DataSet时 copy出来 DataSet只能被使用一次 使用完会被销毁
+        DataSet ectbProjectInfoCopy = ectbProjectInfo.copy();
+        //商机线索id集合
+        List<Long> clueIdList = new ArrayList<>();
+        //2.遍历商机线索数据并提取id
+        while (ectbProjectInfoCopy.hasNext()) {
+            Row ectbProjectInfoRow = ectbProjectInfoCopy.next();
+            clueIdList.add(ectbProjectInfoRow.getLong("project_id"));
+        }
+        //3.通过商机线索id集合进行过滤
+        DataSet dailyDataSet = QueryServiceHelper.queryDataSet(
+                this.getClass().getName(),
+                PROJECT_DAILY_BILL,
+                queryFields,
+                dailyFilterList.toArray(new QFilter[]{new QFilter("entryentity.jfq5_basedatafield.id", QCP.in, clueIdList)}),
+                null
+        );
+        //4.关联商机线索数据
+        dailyDataSet = ectbProjectInfo.leftJoin(dailyDataSet).on("project_id", "clue_id")
+                .select( "project_name", "project_customer_id", "project_address", "project_contract_amount", "project_description", "project_owner_id", "project_start_date", "contact_id", "progress", "difficulties", "auditdate", "remarks").finish();
+
+
+
+        if (dailyDataSet != null) {
+            logger.info("[数据查询] 查询成功，dailyDataSet非空");
+        } else {
+            logger.error("[数据查询] 错误：dailyDataSet为null！");
+        }
+
+        // 5. 遍历结果集并填充数据
+        logger.info("[数据填充] 开始遍历查询结果...");
+        int rowCount = 0;
+        if (dailyDataSet != null) {
+            while (dailyDataSet.hasNext()) {
+                rowCount++;
+                logger.info("[数据填充] ========== 处理第" + rowCount + "行数据 ==========");
+                Row row = dailyDataSet.next();
+
+                Object[] tempData = new Object[FIELDS.length];
+
+
+                // [0] 填充线索名称 (商机线索.name)
+                String clueName = row.getString("project_id");
+                tempData[0] = clueName;
+                logger.info("[数据填充] [0]线索名称: " + clueName);
+
+               /* // [1] 填充业主名称 (商机线索.customer.id)
+                Long customerId = row.getLong("project_customer_id");
+                tempData[1] = customerId;
+                logger.info("[数据填充] [1]业主名称ID: " + customerId);
+
+                // [2] 填充地点 (商机线索.project_address)
+                String address = row.getString("project_address");
+                tempData[2] = address;
+                logger.info("[数据填充] [2]地点: " + address);
+
+                // [3] 填充项目预算 (商机线索.contract_amount)
+                java.math.BigDecimal amount = row.getBigDecimal("project_contract_amount");
+                tempData[3] = amount;
+                logger.info("[数据填充] [3]项目预算: " + amount);
+
+                // [4] 填充项目概况 (商机线索.description)
+                String description = row.getString("project_description");
+                tempData[4] = description;
+                logger.info("[数据填充] [4]项目概况: " + description);
+
+
+                // [5] 填充负责人 (商机线索.jfq5_opportunityowne.name)
+                Long owner = row.getLong("project_owner_id");
+                tempData[5] = owner;
+                logger.info("[数据填充] [5]负责人: " + owner);
+
+                // [6] 填充计划招标时间 (商机线索.start_date)
+                java.util.Date startDate = row.getDate("project_start_date");
+                tempData[6] = startDate;
+                logger.info("[数据填充] [6]计划招标时间: " + startDate);
+*/
+                // [7] 填充联系人 (日报.jfq5_basedatafield21.id)
+                Long contactId = row.getLong("contact_id");
+                tempData[7] = contactId;
+                logger.info("[数据填充] [7]联系人ID: " + contactId);
+
+                // [8] 填充项目进度 (日报.jfq5_textfield2)
+                String progress = row.getString("progress");
+                tempData[8] = progress;
+                logger.info("[数据填充] [8]项目进度: " + progress);
+
+                // [9] 填充遇到的困难 (日报.jfq5_textfield31)
+                String difficulties = row.getString("difficulties");
+                tempData[9] = difficulties;
+                logger.info("[数据填充] [9]遇到的困难: " + difficulties);
+
+                // [10] 填充审核时间 (日报.jfq5_auditdate)
+                java.util.Date auditdate = row.getDate("auditdate");
+                tempData[10] = auditdate;
+                logger.info("[数据填充] [10]审核时间: " + auditdate);
+
+                // [11] 填充备注 (日报.jfq5_remarks)
+                String remarks = row.getString("remarks");
+                tempData[11] = remarks;
+                logger.info("[数据填充] [11]备注: " + remarks);
+
+                coll.add(tempData);
+                logger.info("[数据填充] 第" + rowCount + "行数据添加成功");
+
+
+            }
+        }
+
+
+        logger.info("[数据填充] 遍历完成，共处理" + rowCount + "行数据");
+        logger.info("[数据填充] 最终coll大小: " + coll.size());
+
+        logger.info("========== [商机线索进度表] query方法执行完成，返回结果集 ==========");
+        return createDataSet;
+
+
+    }
+    public String fields () {
+        List<String> fields = new ArrayList<>();
+        fields.add("entryentity.jfq5_basedatafield.id as clue_id");
+//        fields.add("entryentity.jfq5_basedatafield.name"); //线索名称
+//        fields.add("entryentity.jfq5_basedatafield.customer.id");//业主名称
+//        fields.add("entryentity.jfq5_basedatafield.project_address");// 地点
+//        fields.add("entryentity.jfq5_basedatafield.contract_amount");// 项目预算
+//        fields.add("entryentity.jfq5_basedatafield.description");// 项目概况
+//        fields.add("entryentity.jfq5_basedatafield.jfq5_opportunityowne.id");// 负责人
+//        fields.add("entryentity.jfq5_basedatafield.start_date"); //计划招标时间
+
+        fields.add("entryentity.jfq5_subentryentity1.jfq5_basedatafield21.id as contact_id");//联系人
+        fields.add("entryentity.jfq5_subentryentity1.jfq5_textfield2 as progress");//项目进度
+        fields.add("entryentity.jfq5_subentryentity1.jfq5_textfield31 as difficulties"); //遇到的困难
+        fields.add("auditdate"); // 审核时间
+        fields.add("entryentity.jfq5_subentryentity1.jfq5_textfield4 as remarks"); //备注
+
+        return String.join(", ", fields);
+    }
+
+    public String projectFields() {
+        List<String> fields = new ArrayList<>();
+        fields.add("id as project_id");//主键id
+        fields.add("billno as project_billno");//线索编号
+        fields.add("name as project_name");//名称
+        fields.add("customer.id as project_customer_id");//业主名称
+        fields.add("project_address as project_address");//地点
+        fields.add("contract_amount as project_contract_amount");//项目预算
+        fields.add("description as project_description");//项目概况
+        fields.add("jfq5_opportunityowne.id as project_owner_id");//负责人
+        fields.add("start_date as project_start_date");//计划招标时间
+        return String.join(", ", fields);
+    }
+}
+
+
+
