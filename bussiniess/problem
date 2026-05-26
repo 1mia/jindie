@@ -7,3 +7,5 @@
 当我想__显示左表的全部数据____的时候，可以用____left join__这个写法，因为它能___避免只返回匹配数据___。”
 4.没用过的对象操作
 当我想____从 Map 中获取值，如果键不存在则返回默认值__的时候，可以用___ contactIdsBySubentryId.getOrDefault(subentryId, "");___这个写法，因为它能__减少代码量____。”
+5.没用过的数组方法
+当我想___在sql中拼接动态变量___的时候，可以用___ sb.append(" WHERE t.fdetailid IN (").append(subentryIdsStr).append(")\n");___这个写法，因为它能__避免____。”
