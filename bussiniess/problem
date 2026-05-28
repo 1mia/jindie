@@ -1,4 +1,4 @@
-当我想______的时候，可以用______这个写法，因为它能______。”
+当我想______的时候，可以用______这个写法，因为它能______。
 1.没用过的数组方法
     当我想___多次遍历dataset___的时候，可以用__dailyDataSet.copy()____这个写法，因为它能___避免___。”
 2.没用过的聚合函数
@@ -9,4 +9,5 @@
 当我想____从 Map 中获取值，如果键不存在则返回默认值__的时候，可以用___ contactIdsBySubentryId.getOrDefault(subentryId, "");___这个写法，因为它能__减少代码量____。”
 5.没用过的数组方法
 当我想___动态拼接sql___的时候，可以用___  StringBuffer.append(" WHERE t.fdetailid IN (" + subentryIdsStr +")");___这个写法，因为它能__提高性能____。”
-6.
+6.没用过的查询方法
+当我想___查询标准单据数据___的时候，可以用___QueryServiceHelper.queryDataSet(algoKey, entityName, selectFields, filters, orderBys)___这个写法，因为它能___代替编写完整sql___。
