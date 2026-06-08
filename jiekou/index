@@ -1,2 +1,5 @@
 当我想______的时候，可以用______这个写法，因为它能______。
-
+1.没用过的对象操作
+当我想____在保存时在附件存值__的时候，可以用___ dynamicObject.getDynamicObjectCollection("jfq5_attachmententity");___这个写法，因为它能__减少代码量____。”
+2.没见过的函数
+当我想____保存时将内存中数据存入数据库__的时候，可以用___public static OperationResult executeOperate(String operationKey, String entityNumber, DynamicObject[] dataEntities, OperateOption option) {___这个写法，因为它能__控制保存行为____。
