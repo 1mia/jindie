@@ -1,8 +1,12 @@
 当我想______的时候，可以用______这个写法，因为它能______。
 1.没用过的对象操作
-当我想____在保存时在附件存值__的时候，可以用___ dynamicObject.getDynamicObjectCollection("jfq5_attachmententity");___这个写法，因为它能__减少代码量____。”
-2.没见过的函数
-当我想____保存时将内存中数据存入数据库__的时候，可以用___public static OperationResult executeOperate(String operationKey, String entityNumber, DynamicObject[] dataEntities, OperateOption option) {___这个写法，因为它能__控制保存行为____。
+当我想___在内存中创建一个金蝶表单的"数据容器对象___的时候，可以用____DynamicObject dynamicObject = BusinessDataServiceHelper.newDynamicObject("pmct_outcontract");__这个写法，因为它能______。
+2.没用过的对象操作
+当我想____获取金蝶表单中的附件分录集合对象__的时候，可以用___ dynamicObject.getDynamicObjectCollection("jfq5_attachmententity");___这个写法，因为它能__减少代码量____。”
+3.没用过的分录函数
+当我想___向分录集合中添加新行___的时候，可以用___jfq5_attachmententityColl.addNew();___这个写法，因为它能______。
+2.没用过的保存方法
+当我想____将内存中的 DynamicObject 数据真正写入数据库__的时候，可以用___public static OperationResult executeOperate(String operationKey, String entityNumber, DynamicObject[] dataEntities, OperateOption option) {___这个写法，因为它能__控制保存行为____。
 3.没加过的函数
 当我想___调用接口返回数据___的时候，可以用____JSONObject object = new JSONObject()__这个写法，因为它能______。
 4.没见过的函数
