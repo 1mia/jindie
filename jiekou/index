@@ -5,3 +5,5 @@
 当我想____保存时将内存中数据存入数据库__的时候，可以用___public static OperationResult executeOperate(String operationKey, String entityNumber, DynamicObject[] dataEntities, OperateOption option) {___这个写法，因为它能__控制保存行为____。
 3.没加过的函数
 当我想___调用接口返回数据___的时候，可以用____JSONObject object = new JSONObject()__这个写法，因为它能______。
+4.没见过的函数
+当我想____创建一个自定义 API 响应对象__的时候，可以用____CustomApiResult result = new CustomApiResult();__这个写法，因为它能______。
