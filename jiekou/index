@@ -11,3 +11,5 @@
 当我想___调用接口返回数据___的时候，可以用____JSONObject object = new JSONObject()__这个写法，因为它能______。
 4.没见过的函数
 当我想____创建一个自定义 API 响应对象__的时候，可以用____CustomApiResult result = new CustomApiResult();__这个写法，因为它能______。
+5.
+当我想___从金蝶数据库中查询单条基础资料数据___的时候，可以用___DynamicObject conttypeDy = BusinessDataServiceHelper.loadSingle("pmct_conttype", "id", new QFilter[]{new QFilter("number", QCP.equals, data.getContracttype_number())});___这个写法，因为它能______。
